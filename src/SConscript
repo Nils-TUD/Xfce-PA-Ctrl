@@ -1,0 +1,3 @@
+Import('env')
+prog = env.Program('xfce-pa-ctrl', Glob('*.c'))
+env.Install(env['BINARYDIR'], prog)

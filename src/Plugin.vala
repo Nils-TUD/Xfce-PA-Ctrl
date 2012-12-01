@@ -6,12 +6,17 @@ namespace UI {
 	public class PulseAudioPlugin : Xfce.PanelPlugin {
 		public override void @construct() {
 			button = new Button();
-			button.set_image(new Image.from_icon_name("audio-volume-high", IconSize.BUTTON));
 			button.clicked.connect(() => {
 				try {
-					PopupMenu menu = new PopupMenu();
-					menu.show_all();
-					menu.popup(null, null, this.popup_position_func, 0, 0);
+					if(menu.visible)
+						menu.hide();
+					else {
+						menu.realize();
+						menu.show_all();
+						int x, y;
+						position_func(menu, out x, out y);
+						menu.move(x, y);
+					}
 				}
 				catch(PulseAudio.Error e) {
 					stderr.printf("Error: %s\n", e.message);
@@ -20,7 +25,9 @@ namespace UI {
 			add(button);
 			button.show();
 			add_action_widget(button);
-		
+			
+			menu = new PopupMenu(button);
+			
 			menu_show_about();
 			about.connect(() => {
 				show_about_dialog(null,
@@ -34,26 +41,26 @@ namespace UI {
 			});
 		}
 
-		private void popup_position_func(Gtk.Menu menu, out int x, out int y, out bool push_in) {
+		private void position_func(Widget widget, out int x, out int y) {
 			int height = button.allocation.height;
 		
-			Requisition requisition;
-			menu.size_request(out requisition);
+			Requisition req;
+			widget.size_request(out req);
 			button.get_window().get_origin(out x, out y);
-		
+			
 		    // Show menu above
-		    if(y + height + requisition.height > Gdk.Screen.height())
-		        y -= requisition.height;
+		    if(y + height + req.height > Gdk.Screen.height())
+		        y -= req.height;
 		    // Show menu below
 		    else
 		        y += height;
 
 		    // Adjust horizontal position
-		    if(x + requisition.width > Gdk.Screen.width())
-		        x = Gdk.Screen.width() - requisition.width;
-		    push_in = false;
+		    if(x + req.width > Gdk.Screen.width())
+		        x = Gdk.Screen.width() - req.width;
 		}
 		
+		private PopupMenu? menu;
 		private Button button;
 	}
 }

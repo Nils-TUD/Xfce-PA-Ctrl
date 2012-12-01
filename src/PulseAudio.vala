@@ -13,7 +13,7 @@ namespace PulseAudio {
 				return (int)(100 * ((double)volume / 0x10000));
 			}
 			internal set {
-				volume = (int)(value * 0x10000 / 100.0);
+				volume = (value * 0x10000) / 100;
 			}
 		}
 	}
@@ -95,7 +95,7 @@ namespace PulseAudio {
 		private void set_volume_of(Device d) throws Error {
 			try {
 				Process.spawn_command_line_sync(
-					"pacmd set-sink-volume " + d.index.to_string() + "%#x".printf(d.volume)
+					"pacmd set-sink-volume " + d.index.to_string() + " %#x".printf(d.volume)
 				);
 			}
 			catch(SpawnError e) {

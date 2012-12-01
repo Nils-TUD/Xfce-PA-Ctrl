@@ -1,3 +1,11 @@
 Import('env')
-prog = env.Program('xfce-pa-ctrl', Glob('*.c'))
-env.Install(env['BINARYDIR'], prog)
+import os
+
+res = env.Vala(Glob('*.vala'))
+cfiles = []
+for f in Glob('*.vala'):
+    cfiles.append(os.path.basename(f.path).replace('.vala', '.c'))
+env.SideEffect(cfiles, res)
+
+shlib = env.SharedLibrary('libxfce-pa-ctrl', cfiles)
+env.Install(env['BINARYDIR'], shlib)

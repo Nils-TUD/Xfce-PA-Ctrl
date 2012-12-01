@@ -1,20 +1,20 @@
 #!/bin/sh
 
 # config
-if [ -f /proc/cpuinfo ]; then
-    cpus=`cat /proc/cpuinfo | grep '^processor[[:space:]]*:' | wc -l`
-else
+#if [ -f /proc/cpuinfo ]; then
+#    cpus=`cat /proc/cpuinfo | grep '^processor[[:space:]]*:' | wc -l`
+#else
     cpus=1
-fi
+#fi
 opts="-j$cpus"
 
 # fall back to some reasonable defaults for the RPC environment variables
-if [ "$RPC_BUILD" != "debug" ]; then
-    export RPC_BUILD="release"
+if [ "$XPC_BUILD" != "debug" ]; then
+    export XPC_BUILD="release"
 fi
 
 # don't change anything below!
-build="build/$RPC_BUILD"
+build="build/$XPC_BUILD"
 root=$(dirname $(readlink -f $0))
 
 # parse arguments
@@ -60,13 +60,14 @@ case "$cmd" in
         ;;
 esac
 
-echo "Working in $RPC_BUILD mode"
+echo "Working in $XPC_BUILD mode"
 
 if $dobuild; then
     echo "Building with $cpus jobs..."
 
     # build userland
     scons $opts || exit 1
+    sudo cp $build/bin/libxfce-pa-ctrl.so /usr/lib/xfce4/panel/plugins
 fi
 
 # run the specified command, if any
@@ -78,7 +79,8 @@ case "$cmd" in
         rm -Rf build/*
         ;;
     run)
-        $build/bin/xfce-pa-ctrl | tee log.txt
+        killall xfce4-panel
+        xfce4-panel &
         ;;
     dis)
         objdump -SC $build/bin/xfce-pa-ctrl | less

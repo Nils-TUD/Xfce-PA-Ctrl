@@ -8,4 +8,4 @@ for f in Glob('*.vala'):
 env.SideEffect(cfiles, res)
 
 shlib = env.SharedLibrary('libxfce-pa-ctrl', cfiles)
-env.Install(env['BINARYDIR'], shlib)
+env.Alias("install", env.Install(env['PREFIX'] + '/lib/xfce4/panel/plugins', shlib))

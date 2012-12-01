@@ -90,8 +90,13 @@ namespace UI {
 			volume.set_value(default_device.relative_volume);
 			volume.change_value.connect((scroll, new_value) => {
 				if(new_value >= 0 && new_value <= 100) {
-					devices.set_volume((int)new_value);
-					adjust_button_icon();
+					try {
+						devices.set_volume((int)new_value);
+						adjust_button_icon();
+					}
+					catch(PulseAudio.Error e) {
+						stderr.printf("Error: %s\n", e.message);
+					}
 					return false;
 				}
 				return true;

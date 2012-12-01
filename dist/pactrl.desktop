@@ -1,0 +1,8 @@
+[Xfce Panel]
+Type=X-XFCE-PanelPlugin
+Encoding=UTF-8
+Name=Pulse Audio Control
+Comment=Allows to control the volume, select the audio device and mute/unmute devices
+Icon=audio-volume-medium
+X-XFCE-Module=xfce-pa-ctrl
+X-XFCE-Internal=FALSE

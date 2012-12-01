@@ -6,6 +6,7 @@ libs = subprocess.check_output(['pkg-config', '--libs', 'libxfce4panel-1.0 gee-1
 vala_builder = Builder(action = '$VC -d $BUILDDIR_OS -C $VCFLAGS $SOURCES',
                        src_suffix = '.vala')
 env = Environment(
+    PREFIX = '/usr',
     CC = 'clang',
     VC = 'valac',
     VCFLAGS = '--pkg=gtk+-2.0 --pkg=gee-1.0 --pkg=libxfce4panel-1.0',
@@ -28,16 +29,14 @@ else:
     btype = 'release'
 builddir = 'build/' + btype
 
-verbose = ARGUMENTS.get('VERBOSE',0);
-if int(verbose) == 0:
-    env['CCCOMSTR'] = "CC $TARGET"
-    env['LINKCOMSTR'] = "LD $TARGET"
-
 env.Append(
     BUILDDIR = '#' + builddir,
     BUILDDIR_OS = builddir,
     BINARYDIR = '#' + builddir + '/bin',
 )
 
-env.SConscript('img/SConscript', 'env', variant_dir = builddir + '/img', duplicate = 0)
+env.SConscript('dist/SConscript', 'env', variant_dir = builddir + '/dist', duplicate = 0)
 env.SConscript('src/SConscript', 'env', variant_dir = builddir + '/src', duplicate = 0)
+
+if 'uninstall' in COMMAND_LINE_TARGETS:
+	env.Command("uninstall", None, Delete(FindInstalledFiles()))

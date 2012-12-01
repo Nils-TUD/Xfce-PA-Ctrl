@@ -187,9 +187,6 @@ namespace PulseAudio {
 				catch(RegexError e) {
 					stderr.printf("Error: %s\n", e.message);
 				}
-				catch(Error e) {
-					dev.nice_name = dev.name;
-				}
 			}
 		}
 		

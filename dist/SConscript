@@ -1,0 +1,2 @@
+Import('env')
+env.Alias("install", env.Install(env['PREFIX'] + '/share/xfce4/panel/plugins', 'pactrl.desktop'))

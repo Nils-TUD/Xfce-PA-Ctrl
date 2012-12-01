@@ -7,26 +7,26 @@ namespace UI {
 		public override void @construct() {
 			button = new Button();
 			button.clicked.connect(() => {
-				try {
-					if(menu.visible)
-						menu.hide();
-					else {
-						menu.realize();
-						menu.show_all();
-						int x, y;
-						position_func(menu, out x, out y);
-						menu.move(x, y);
-					}
-				}
-				catch(PulseAudio.Error e) {
-					stderr.printf("Error: %s\n", e.message);
+				if(menu.visible)
+					menu.hide();
+				else {
+					menu.realize();
+					menu.show_all();
+					int x, y;
+					position_func(menu, out x, out y);
+					menu.move(x, y);
 				}
 			});
 			add(button);
 			button.show();
 			add_action_widget(button);
 			
-			menu = new PopupMenu(button);
+			try {
+				menu = new PopupMenu(button);
+			}
+			catch(PulseAudio.Error e) {
+				stderr.printf("Error: %s\n", e.message);
+			}
 			
 			menu_show_about();
 			about.connect(() => {
@@ -56,6 +56,8 @@ namespace UI {
 		        y += height;
 
 		    // Adjust horizontal position
+		    // TODO actually, this doesn't work because Screen.width() might be the whole screen
+		    // when you have multiple monitors.
 		    if(x + req.width > Gdk.Screen.width())
 		        x = Gdk.Screen.width() - req.width;
 		}

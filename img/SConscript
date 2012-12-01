@@ -1,2 +1,0 @@
-Import('env')
-env.Install(env['BINARYDIR'], Glob('*.png'))

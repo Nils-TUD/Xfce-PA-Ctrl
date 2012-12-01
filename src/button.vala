@@ -38,7 +38,7 @@ public class ButtonPlugin : Xfce.PanelPlugin {
 
 	public override void @construct() {
 		button = new Gtk.Button();
-		button.set_image(new Gtk.Image.from_file("/home/hrniels/xfce-pa-ctrl/build/debug/bin/icon.png"));
+		button.set_image(new Gtk.Image.from_icon_name("audio-volume-high", Gtk.IconSize.BUTTON));
 		button.clicked.connect(() => {
 			Gtk.Menu menu = new Gtk.Menu();
 			try {

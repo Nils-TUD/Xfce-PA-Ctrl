@@ -48,10 +48,12 @@ namespace UI {
 			
 			menu_show_about();
 			about.connect(() => {
-				show_about_dialog(null,
+				show_about_dialog(
+					null,
 					"program-name", "Pulse Audio Control",
 					"comments", "Let's you choose the device, control the volume and mute/unmute devices",
-					null);
+					null
+				);
 			});
 
 			destroy.connect(() => {

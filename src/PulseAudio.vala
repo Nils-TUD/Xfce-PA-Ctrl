@@ -38,7 +38,6 @@ namespace PulseAudio {
 	
 	errordomain Error {
 		DUMP_PARSING_FAILED,
-		NO_PCI_DEVICE,
 		SET_VOLUME_FAILED,
 		SET_MUTE_FAILED,
 		SET_DEFAULT_FAILED,
@@ -145,8 +144,8 @@ namespace PulseAudio {
 		
 		private void add_device(string line) throws RegexError {
 			var dev = new Device();
-			Regex pattern_devid = new Regex("device_id=\"(\\d+)\"");
-			Regex pattern_name = new Regex("name=\"(.*?)\"");
+			Regex pattern_devid	= new Regex("device_id=\"(\\d+)\"");
+			Regex pattern_name	= new Regex("name=\"(.*?)\"");
 			string[] parts = line.split(" ");
 			foreach(string part in parts) {
 				MatchInfo info;

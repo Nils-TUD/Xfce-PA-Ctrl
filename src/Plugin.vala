@@ -67,7 +67,7 @@ namespace UI {
 			
 			try {
 				menu = new PopupMenu();
-				menu.state_changed.connect(() => {
+				menu.device_state_changed.connect(() => {
 					adjust_button_icon(menu.default_device);
 				});
 			}

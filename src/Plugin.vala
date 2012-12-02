@@ -21,7 +21,7 @@ using Gee;
 using Gtk;
 
 namespace UI {
-	public class PulseAudioPlugin : Xfce.PanelPlugin {
+	class PulseAudioPlugin : Xfce.PanelPlugin {
 		public override void @construct() {
 			button = new Button();
 			button.clicked.connect(() => {

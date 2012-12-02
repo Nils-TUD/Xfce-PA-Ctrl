@@ -36,7 +36,7 @@ namespace PulseAudio {
 		}
 	}
 	
-	public errordomain Error {
+	errordomain Error {
 		DUMP_PARSING_FAILED,
 		NO_PCI_DEVICE,
 		SET_VOLUME_FAILED,

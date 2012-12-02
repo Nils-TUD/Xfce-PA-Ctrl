@@ -20,7 +20,7 @@ using PulseAudio;
 using Gtk;
 
 namespace UI {
-	public class PopupMenu : Gtk.Window {
+	class PopupMenu : Gtk.Window {
 		private enum Icons {
 			MUTED	= 0,
 			LOW		= 1,

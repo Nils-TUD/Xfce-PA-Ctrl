@@ -112,7 +112,7 @@ namespace UI {
 		}
 	
 		private void add_volume() {
-			volume = new HScale.with_range(0, 100, 5);
+			volume = new HScale.with_range(0, 100, 1);
 			volume.draw_value = false;
 			volume.change_value.connect((scroll, new_value) => {
 				if(new_value >= 0 && new_value <= 100) {

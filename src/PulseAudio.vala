@@ -96,24 +96,11 @@ namespace PulseAudio {
 			}
 		}
 		
-		public void set_volume(int percent) throws Error {
-			foreach(Device dev in devices) {
-				dev.relative_volume = percent;
-				set_volume_of(dev);
-			}
-		}
-		
-		public void toggle_muted() throws Error {
-			foreach(Device dev in devices) {
-				dev.is_muted = !dev.is_muted;
-				set_muted_of(dev);
-			}
-		}
-		
-		private void set_volume_of(Device d) throws Error {
+		public void set_volume(Device dev, int percent) throws Error {
 			try {
+				dev.relative_volume = percent;
 				Process.spawn_command_line_sync(
-					"pacmd set-sink-volume " + d.index.to_string() + " %#x".printf(d.volume)
+					"pacmd set-sink-volume " + dev.index.to_string() + " %#x".printf(dev.volume)
 				);
 			}
 			catch(SpawnError e) {
@@ -121,10 +108,11 @@ namespace PulseAudio {
 			}
 		}
 		
-		private void set_muted_of(Device d) throws Error {
+		public void set_muted(Device dev, bool muted) throws Error {
 			try {
+				dev.is_muted = muted;
 				Process.spawn_command_line_sync(
-					"pacmd set-sink-mute " + d.index.to_string() + " " + (d.is_muted ? "yes" : "no")
+					"pacmd set-sink-mute " + dev.index.to_string() + " " + (dev.is_muted ? "yes" : "no")
 				);
 			}
 			catch(SpawnError e) {

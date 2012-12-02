@@ -64,13 +64,15 @@ namespace UI {
 			// get audio device list
 			devices = new DeviceContainer();
 			default_device = devices.default_device();
-			adjust_button_icon();
 		
 			// add widgets
 			add_devices();
 			vbox.add(new HSeparator());
 			add_mute();
 			add_volume();
+			
+			// set widgets for default device
+			set_for_default();
 		}
 	
 		private void add_devices() {
@@ -83,6 +85,7 @@ namespace UI {
 						if(item.active) {
 							devices.set_default(dev);
 							default_device = dev;
+							set_for_default();
 						}
 					}
 					catch(PulseAudio.Error e) {
@@ -95,28 +98,26 @@ namespace UI {
 		}
 	
 		private void add_mute() {
-			var item = new CheckButton.with_label("Muted");
-			item.active = default_device.is_muted;
-			item.toggled.connect(() => {
+			muted = new CheckButton.with_label("Muted");
+			muted.toggled.connect(() => {
 				try {
-					devices.toggle_muted();
+					devices.set_muted(default_device, muted.active);
 					adjust_button_icon();
 				}
 				catch(PulseAudio.Error e) {
 					stderr.printf("Error: %s\n", e.message);
 				}
 			});
-			vbox.add(item);
+			vbox.add(muted);
 		}
 	
 		private void add_volume() {
 			volume = new HScale.with_range(0, 100, 5);
 			volume.draw_value = false;
-			volume.set_value(default_device.relative_volume);
 			volume.change_value.connect((scroll, new_value) => {
 				if(new_value >= 0 && new_value <= 100) {
 					try {
-						devices.set_volume((int)new_value);
+						devices.set_volume(default_device, (int)new_value);
 						adjust_button_icon();
 					}
 					catch(PulseAudio.Error e) {
@@ -127,6 +128,12 @@ namespace UI {
 				return true;
 			});
 			vbox.add(volume);
+		}
+		
+		private void set_for_default() {
+			volume.set_value(default_device.relative_volume);
+			muted.active = default_device.is_muted;
+			adjust_button_icon();
 		}
 		
 		private void adjust_button_icon() {
@@ -144,6 +151,7 @@ namespace UI {
 		private Frame frm;
 		private VBox vbox;
 		private HScale volume;
+		private CheckButton muted;
 		private Device default_device;
 		private DeviceContainer devices;
 		private Image images[4];

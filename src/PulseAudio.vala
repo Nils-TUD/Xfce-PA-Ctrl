@@ -45,6 +45,8 @@ namespace PulseAudio {
 	}
 	
 	class DeviceContainer {
+		private ArrayList<Device> devices = new ArrayList<Device>();
+		
 		public DeviceContainer() throws Error {
 			parse_dump();
 		}
@@ -120,7 +122,6 @@ namespace PulseAudio {
 		}
 		
 		private void parse_dump() throws Error {
-			devices = new ArrayList<Device>();
 			try {
 				string dump;
 				Process.spawn_command_line_sync("pacmd dump", out dump);
@@ -203,8 +204,6 @@ namespace PulseAudio {
 			}
 			return null;
 		}
-		
-		private ArrayList<Device> devices;
 	}
 }
 

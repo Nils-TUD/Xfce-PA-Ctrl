@@ -22,7 +22,25 @@ using Gtk;
 
 namespace UI {
 	class PulseAudioPlugin : Xfce.PanelPlugin {
+		private enum IconType {
+			MUTED	= 0,
+			LOW		= 1,
+			MEDIUM	= 2,
+			HIGH	= 3
+		}
+		
+		private PopupMenu? menu;
+		private Button button;
+		private Image? images[4];
+		private string icons[4];
+		
 		public override void @construct() {
+			// images for the panel-button
+			icons[IconType.MUTED]	= "audio-volume-muted";
+			icons[IconType.LOW]		= "audio-volume-low";
+			icons[IconType.MEDIUM]	= "audio-volume-medium";
+			icons[IconType.HIGH]	= "audio-volume-high";
+			
 			button = new Button();
 			button.clicked.connect(() => {
 				if(menu.visible)
@@ -31,7 +49,7 @@ namespace UI {
 					menu.realize();
 					menu.show_all();
 					int x, y;
-					position_func(menu, out x, out y);
+					get_popup_position(menu, out x, out y);
 					menu.move(x, y);
 				}
 			});
@@ -39,11 +57,23 @@ namespace UI {
 			button.show();
 			add_action_widget(button);
 			
+			size_changed.connect((size) => {
+				// calculate the matching icon again, based on the new size
+				for(int i = 0; i < images.length; ++i)
+					images[i] = null;
+				adjust_button_icon(menu.default_device);
+				return true;
+			});
+			
 			try {
-				menu = new PopupMenu(button);
+				menu = new PopupMenu();
+				menu.state_changed.connect(() => {
+					adjust_button_icon(menu.default_device);
+				});
 			}
 			catch(PulseAudio.Error e) {
 				stderr.printf("Error: %s\n", e.message);
+				main_quit();
 			}
 			
 			menu_show_about();
@@ -60,8 +90,35 @@ namespace UI {
 				main_quit();
 			});
 		}
+		
+		private void adjust_button_icon(PulseAudio.Device dev) {
+			if(dev.is_muted)
+				set_button_icon(IconType.MUTED);
+			else if(dev.relative_volume <= 33)
+				set_button_icon(IconType.LOW);
+			else if(dev.relative_volume <= 66)
+				set_button_icon(IconType.MEDIUM);
+			else
+				set_button_icon(IconType.HIGH);
+		}
+		
+		private void set_button_icon(IconType type) {
+			if(images[type] == null) {
+				// find the best matching item, based on the panel size
+				IconInfo info = IconTheme.get_default().lookup_icon(
+					icons[type], get_size(), IconLookupFlags.USE_BUILTIN
+				);
+				try {
+					images[type] = new Image.from_pixbuf(info.load_icon());
+				}
+				catch(GLib.Error e) {
+					images[type] = new Image.from_icon_name(icons[type], IconSize.BUTTON);
+				}
+			}
+			button.set_image(images[type]);
+		}
 
-		private void position_func(Widget widget, out int x, out int y) {
+		private void get_popup_position(Widget widget, out int x, out int y) {
 			int width = button.allocation.width;
 			int height = button.allocation.height;
 		
@@ -103,9 +160,6 @@ namespace UI {
 					break;
 			}
 		}
-		
-		private PopupMenu? menu;
-		private Button button;
 	}
 }
 

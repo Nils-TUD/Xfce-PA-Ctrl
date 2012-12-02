@@ -21,21 +21,16 @@ using Gtk;
 
 namespace UI {
 	class PopupMenu : Gtk.Window {
-		private enum Icons {
-			MUTED	= 0,
-			LOW		= 1,
-			MEDIUM	= 2,
-			HIGH	= 3
-		}
-	
-		public PopupMenu(Button btn) throws PulseAudio.Error {
-			// images for the panel-button
-			images[Icons.MUTED]		= new Image.from_icon_name("audio-volume-muted", IconSize.BUTTON);
-			images[Icons.LOW]		= new Image.from_icon_name("audio-volume-low", IconSize.BUTTON);
-			images[Icons.MEDIUM]	= new Image.from_icon_name("audio-volume-medium", IconSize.BUTTON);
-			images[Icons.HIGH]		= new Image.from_icon_name("audio-volume-high", IconSize.BUTTON);
-			button = btn;
-			
+		private Frame frm;
+		private VBox vbox;
+		private HScale volume;
+		private CheckButton muted;
+		private DeviceContainer devices;
+		
+		public Device default_device { get; private set; }
+		public signal void device_state_changed();
+		
+		public PopupMenu() throws PulseAudio.Error {
 			// use a frame to have a border
 			frm = new Frame(null);
 			vbox = new VBox(true, 2);
@@ -102,7 +97,7 @@ namespace UI {
 			muted.toggled.connect(() => {
 				try {
 					devices.set_muted(default_device, muted.active);
-					adjust_button_icon();
+					device_state_changed();
 				}
 				catch(PulseAudio.Error e) {
 					stderr.printf("Error: %s\n", e.message);
@@ -118,7 +113,7 @@ namespace UI {
 				if(new_value >= 0 && new_value <= 100) {
 					try {
 						devices.set_volume(default_device, (int)new_value);
-						adjust_button_icon();
+						device_state_changed();
 					}
 					catch(PulseAudio.Error e) {
 						stderr.printf("Error: %s\n", e.message);
@@ -133,28 +128,8 @@ namespace UI {
 		private void set_for_default() {
 			volume.set_value(default_device.relative_volume);
 			muted.active = default_device.is_muted;
-			adjust_button_icon();
+			device_state_changed();
 		}
-		
-		private void adjust_button_icon() {
-			if(default_device.is_muted)
-				button.set_image(images[Icons.MUTED]);
-			else if(default_device.relative_volume <= 33)
-				button.set_image(images[Icons.LOW]);
-			else if(default_device.relative_volume <= 66)
-				button.set_image(images[Icons.MEDIUM]);
-			else
-				button.set_image(images[Icons.HIGH]);
-		}
-
-		private Button button;	
-		private Frame frm;
-		private VBox vbox;
-		private HScale volume;
-		private CheckButton muted;
-		private Device default_device;
-		private DeviceContainer devices;
-		private Image images[4];
 	}
 }
 

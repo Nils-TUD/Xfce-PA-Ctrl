@@ -62,24 +62,46 @@ namespace UI {
 		}
 
 		private void position_func(Widget widget, out int x, out int y) {
+			int width = button.allocation.width;
 			int height = button.allocation.height;
 		
+			// get panel-plugin position
 			Requisition req;
 			widget.size_request(out req);
 			button.get_window().get_origin(out x, out y);
 			
-		    // Show menu above
-		    if(y + height + req.height > Gdk.Screen.height())
-		        y -= req.height;
-		    // Show menu below
-		    else
-		        y += height;
+			// get rectangle of the monitor the panel-plugin is on
+			Gdk.Rectangle monrect;
+			Gdk.Screen screen = Gdk.Screen.get_default();
+			int monitor = screen.get_monitor_at_point(x, y);
+			screen.get_monitor_geometry(monitor, out monrect);
+			
+			switch(get_orientation()) {
+				case Orientation.HORIZONTAL:
+					// Show menu above
+					if(y + height + req.height > monrect.height)
+						y -= req.height;
+					// Show menu below
+					else
+						y += height;
 
-		    // Adjust horizontal position
-		    // TODO actually, this doesn't work because Screen.width() might be the whole screen
-		    // when you have multiple monitors.
-		    if(x + req.width > Gdk.Screen.width())
-		        x = Gdk.Screen.width() - req.width;
+					// Adjust horizontal position
+					if(x + req.width > monrect.width)
+						x = monrect.width - req.width;
+					break;
+
+				case Orientation.VERTICAL:
+					// show menu on the right
+					if(x + width + req.width > monrect.width)
+						x -= req.width;
+					// show menu on the left
+					else
+						x += width;
+					
+					if(y + req.height > monrect.height)
+						y = monrect.height - req.height;
+					break;
+			}
 		}
 		
 		private PopupMenu? menu;

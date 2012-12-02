@@ -172,28 +172,37 @@ namespace PulseAudio {
 			}
 		}
 		
-		private void change_names() {
-			foreach(Device dev in devices) {
-				try {
-					if(dev.name[0:4] == "pci-") {
-						Regex pattern = new Regex("\\d+_(\\d+)_(\\d+).(\\d+).*");
-						MatchInfo info;
-						if(pattern.match(dev.name, 0, out info)) {
-							PCI.BDF bdf = {
-								int.parse(info.fetch(1)),
-								int.parse(info.fetch(2)),
-								int.parse(info.fetch(3))
-							};
-							dev.nice_name = PCI.bdf_to_name(bdf);
-						}
-					}
-					else if(dev.name[0:4] == "usb-")
-						dev.nice_name = dev.name.substring(dev.name.index_of_char('_') + 1);
+		private void change_names() throws SpawnError, RegexError {
+			string cards;
+			Process.spawn_command_line_sync("pacmd list-cards", out cards);
+		
+			Device? dev = null;
+			int index = -1;
+			Regex idxregex		= new Regex("\\s*index:\\s*(\\d+)");
+			Regex vendorregex	= new Regex("\\s*device.vendor.name = \"(.*?)\"");
+			Regex prodregex		= new Regex("\\s*device.product.name = \"(.*?)\"");
+			string[] lines = cards.split("\n");
+			foreach(string line in lines) {
+				MatchInfo info;
+				if(idxregex.match(line, 0, out info)) {
+					index = int.parse(info.fetch(1));
+					dev = get_by_index(index);
 				}
-				catch(RegexError e) {
-					stderr.printf("Error: %s\n", e.message);
+				else if(dev != null) {
+					if(vendorregex.match(line, 0, out info))
+						dev.nice_name = info.fetch(1);
+					else if(prodregex.match(line, 0, out info))
+						dev.nice_name += " " + info.fetch(1);
 				}
 			}
+		}
+		
+		private Device? get_by_index(int index) {
+			foreach(Device dev in devices) {
+				if(dev.index == index)
+					return dev;
+			}
+			return null;
 		}
 		
 		private ArrayList<Device> devices;

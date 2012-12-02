@@ -21,12 +21,19 @@ using Gtk;
 
 namespace UI {
 	public class PopupMenu : Gtk.Window {
+		private enum Icons {
+			MUTED	= 0,
+			LOW		= 1,
+			MEDIUM	= 2,
+			HIGH	= 3
+		}
+	
 		public PopupMenu(Button btn) throws PulseAudio.Error {
 			// images for the panel-button
-			images[0] = new Image.from_icon_name("audio-volume-muted", IconSize.BUTTON);
-			images[1] = new Image.from_icon_name("audio-volume-low", IconSize.BUTTON);
-			images[2] = new Image.from_icon_name("audio-volume-medium", IconSize.BUTTON);
-			images[3] = new Image.from_icon_name("audio-volume-high", IconSize.BUTTON);
+			images[Icons.MUTED]		= new Image.from_icon_name("audio-volume-muted", IconSize.BUTTON);
+			images[Icons.LOW]		= new Image.from_icon_name("audio-volume-low", IconSize.BUTTON);
+			images[Icons.MEDIUM]	= new Image.from_icon_name("audio-volume-medium", IconSize.BUTTON);
+			images[Icons.HIGH]		= new Image.from_icon_name("audio-volume-high", IconSize.BUTTON);
 			button = btn;
 			
 			// use a frame to have a border
@@ -124,13 +131,13 @@ namespace UI {
 		
 		private void adjust_button_icon() {
 			if(default_device.is_muted)
-				button.set_image(images[0]);
+				button.set_image(images[Icons.MUTED]);
 			else if(default_device.relative_volume <= 33)
-				button.set_image(images[1]);
+				button.set_image(images[Icons.LOW]);
 			else if(default_device.relative_volume <= 66)
-				button.set_image(images[2]);
+				button.set_image(images[Icons.MEDIUM]);
 			else
-				button.set_image(images[3]);
+				button.set_image(images[Icons.HIGH]);
 		}
 
 		private Button button;	

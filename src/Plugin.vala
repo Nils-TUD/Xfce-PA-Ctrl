@@ -29,7 +29,7 @@ namespace UI {
 			HIGH	= 3
 		}
 		
-		private PopupMenu? menu;
+		private PopupMenu menu;
 		private ToggleButton button;
 		private Image? images[4];
 		private string icons[4];
@@ -67,15 +67,15 @@ namespace UI {
 			
 			try {
 				menu = new PopupMenu();
-                                // close popup if it looses focus
-    			        menu.set_events(Gdk.EventMask.FOCUS_CHANGE_MASK);
-                                menu.focus_out_event.connect((event) => {
-                                        button.active = false;
-                                        menu.hide();
-                                        return true;
-                                });
+				// close popup if it looses focus
+				menu.set_events(Gdk.EventMask.FOCUS_CHANGE_MASK);
+				menu.focus_out_event.connect((event) => {
+					button.active = false;
+					menu.hide();
+					return true;
+				});
 
-                                // change button icon when the volume or muted state changed
+				// change button icon when the volume or muted state changed
 				menu.device_state_changed.connect(() => {
 					adjust_button_icon(menu.default_device);
 				});

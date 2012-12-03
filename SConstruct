@@ -11,7 +11,7 @@ env = Environment(
     VC = 'valac',
     VCFLAGS = '--pkg=gtk+-2.0 --pkg=gee-1.0 --pkg=libxfce4panel-1.0',
     CFLAGS = '-ansi -std=c99 ' + flags,
-    LINKFLAGS = libs,
+    LINKFLAGS = '-Wl,--no-as-needed ' + libs,
     ENV = {
         'PATH' : os.environ['PATH'],
         'TERM' : os.environ['TERM'],

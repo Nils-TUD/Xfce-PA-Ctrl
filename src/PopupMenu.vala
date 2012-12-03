@@ -49,12 +49,6 @@ namespace UI {
 				menu.realize();
 				modify_bg(StateType.NORMAL, menu.get_style().bg[0]);
 			}
-			// close popup if it looses focus
-			set_events(Gdk.EventMask.FOCUS_CHANGE_MASK);
-			focus_out_event.connect((event) => {
-				this.hide();
-				return true;
-			});
 			
 			// get audio device list
 			devices = new DeviceContainer();

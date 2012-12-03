@@ -30,7 +30,7 @@ namespace UI {
 		}
 		
 		private PopupMenu? menu;
-		private Button button;
+		private ToggleButton button;
 		private Image? images[4];
 		private string icons[4];
 		
@@ -41,7 +41,7 @@ namespace UI {
 			icons[IconType.MEDIUM]	= "audio-volume-medium";
 			icons[IconType.HIGH]	= "audio-volume-high";
 			
-			button = new Button();
+			button = new ToggleButton();
 			button.clicked.connect(() => {
 				if(menu.visible)
 					menu.hide();
@@ -67,6 +67,15 @@ namespace UI {
 			
 			try {
 				menu = new PopupMenu();
+                                // close popup if it looses focus
+    			        menu.set_events(Gdk.EventMask.FOCUS_CHANGE_MASK);
+                                menu.focus_out_event.connect((event) => {
+                                        button.active = false;
+                                        menu.hide();
+                                        return true;
+                                });
+
+                                // change button icon when the volume or muted state changed
 				menu.device_state_changed.connect(() => {
 					adjust_button_icon(menu.default_device);
 				});

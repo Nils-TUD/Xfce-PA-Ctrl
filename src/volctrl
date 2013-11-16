@@ -1,0 +1,7 @@
+#!/bin/sh
+sink=`pacmd dump | grep set-default-sink | cut -f 2 -d ' '`
+case $1 in
+	inc)	pactl -- set-sink-volume $sink '+2%' ;;
+	dec)	pactl -- set-sink-volume $sink '-2%' ;;
+	*)		echo "Usage: $0 (inc|dec)" 1>&2 ;;
+esac

@@ -9,3 +9,4 @@ env.SideEffect(cfiles, res)
 
 shlib = env.SharedLibrary('libxfce-pa-ctrl', cfiles)
 env.Alias("install", env.Install(env['PREFIX'] + '/lib/xfce4/panel/plugins', shlib))
+env.Alias("install", env.Install(env['PREFIX'] + '/bin', 'volctrl'))

@@ -1,7 +1,7 @@
 import os, subprocess
 
-flags = subprocess.check_output(['pkg-config', '--cflags', 'libxfce4panel-1.0 gee-1.0']).rstrip()
-libs = subprocess.check_output(['pkg-config', '--libs', 'libxfce4panel-1.0 gee-1.0']).rstrip()
+flags = subprocess.check_output(['pkg-config', '--cflags', 'libxfce4panel-1.0 gee-1.0 libpulse libpulse-mainloop-glib']).rstrip()
+libs = subprocess.check_output(['pkg-config', '--libs', 'libxfce4panel-1.0 gee-1.0 libpulse libpulse-mainloop-glib']).rstrip()
 
 vala_builder = Builder(action = '$VC -d $BUILDDIR_OS -C $VCFLAGS $SOURCES',
                        src_suffix = '.vala')
@@ -9,7 +9,7 @@ env = Environment(
     PREFIX = '/usr',
     CC = 'clang',
     VC = 'valac',
-    VCFLAGS = '--pkg=gtk+-2.0 --pkg=gee-1.0 --pkg=libxfce4panel-1.0',
+    VCFLAGS = '--pkg=gtk+-2.0 --pkg=gee-1.0 --pkg=libxfce4panel-1.0 --pkg=libpulse --pkg=libpulse-mainloop-glib --vapidir=contrib',
     CFLAGS = '-ansi -std=c99 ' + flags,
     LINKFLAGS = '-Wl,--no-as-needed ' + libs,
     ENV = {

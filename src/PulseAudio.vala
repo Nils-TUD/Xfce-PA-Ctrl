@@ -5,12 +5,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License along
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
@@ -18,8 +18,8 @@
 
 using Gee;
 
-namespace PulseAudio {
-	class Device {
+namespace MyPulseAudio {
+	class Stream {
 		public int index { get; set; }
 		public string name { get; set; }
 		public string nice_name { get; set; }
@@ -35,56 +35,67 @@ namespace PulseAudio {
 			}
 		}
 	}
-	
+
+	public enum StreamType {
+		SINK,
+		SOURCE
+	}
+
 	errordomain Error {
 		DUMP_PARSING_FAILED,
 		SET_VOLUME_FAILED,
 		SET_MUTE_FAILED,
 		SET_DEFAULT_FAILED,
-		NO_DEFAULT_DEVICE
+		NO_DEFAULT_STREAM
 	}
-	
-	class DeviceContainer {
-		private ArrayList<Device> devices = new ArrayList<Device>();
-		
-		public DeviceContainer() throws Error {
-			parse_dump();
+
+	class StreamContainer {
+		private ArrayList<Stream> streams = new ArrayList<Stream>();
+		public StreamType streamType {
+			get; internal set;
 		}
-		
-		public Iterator<Device> iterator() {
-			return devices.iterator();
+
+		public StreamContainer(StreamType type) throws Error {
+			this.streamType = type;
+			parse();
 		}
-		
-		public Device default_device() throws Error {
-			foreach(Device dev in devices) {
-				if(dev.is_default)
-					return dev;
-			}
-			throw new Error.NO_DEFAULT_DEVICE("No default device found");
+
+		public Iterator<Stream> iterator() {
+			return streams.iterator();
 		}
-		
-		public void set_default(Device dev) throws Error {
-			foreach(Device d in devices) {
-				if(d == dev) {
-					d.is_default = true;
+
+		public Stream get_default() throws Error {
+			Stream d = get_default_stream();
+			if(d == null)
+				throw new Error.NO_DEFAULT_STREAM("No default stream found");
+			return d;
+		}
+
+		public void set_default(Stream str) throws Error {
+			string setcmd = "set-default-" + (streamType == StreamType.SINK ? "sink" : "source");
+			string lstcmd = "list-" + (streamType == StreamType.SINK ? "sink-inputs" : "source-outputs");
+			string mvecmd = "move-" + (streamType == StreamType.SINK ? "sink-input" : "source-output");
+			foreach(Stream s in streams) {
+				if(s == str) {
+					s.is_default = true;
 					try {
-		                // set default sink
+		                // set default stream
 						Process.spawn_command_line_sync(
-							"pacmd set-default-sink " + d.index.to_string()
+							"pacmd " + setcmd + " " + s.index.to_string()
 						);
-						
-						// move all currently playing stuff to the new default sink
+
+						// move all currently playing stuff to the new default stream
 						string output;
-						Process.spawn_command_line_sync("pacmd list-sink-inputs", out output);
+						Process.spawn_command_line_sync("pacmd " + lstcmd, out output);
 						int counter = 0;
-						var inputs = new int[devices.size];
+						var inputs = new int[streams.size];
 						foreach(string line in output.split("\n")) {
 							if("index:" in line)
 								inputs[counter++] = int.parse(line.split(": ")[1]);
 						}
 						for(int i = 0; i < counter; ++i) {
 							Process.spawn_command_line_sync(
-								"pacmd move-sink-input " + inputs[i].to_string() + " " + d.index.to_string()
+								"pacmd " + mvecmd + " " + inputs[i].to_string() + " " + s.index.to_string()
 							);
 						}
 					}
@@ -93,47 +104,76 @@ namespace PulseAudio {
 					}
 				}
 				else
-					d.is_default = false;
+					s.is_default = false;
 			}
 		}
-		
-		public void set_volume(Device dev, int percent) throws Error {
+
+		public void set_volume(Stream str, int percent) throws Error {
+			string setcmd = "set-" + (streamType == StreamType.SINK ? "sink" : "source") + "-volume";
 			try {
-				dev.relative_volume = percent;
+				str.relative_volume = percent;
 				Process.spawn_command_line_sync(
-					"pacmd set-sink-volume " + dev.index.to_string() + " %#x".printf(dev.volume)
+					"pacmd " + setcmd + " " + str.index.to_string() + " %#x".printf(str.volume)
 				);
 			}
 			catch(SpawnError e) {
 				throw new Error.SET_VOLUME_FAILED(e.message);
 			}
 		}
-		
-		public void set_muted(Device dev, bool muted) throws Error {
+
+		public void set_muted(Stream str, bool muted) throws Error {
+			string setcmd = "set-" + (streamType == StreamType.SINK ? "sink" : "source") + "-mute";
 			try {
-				dev.is_muted = muted;
+				str.is_muted = muted;
 				Process.spawn_command_line_sync(
-					"pacmd set-sink-mute " + dev.index.to_string() + " " + (dev.is_muted ? "yes" : "no")
+					"pacmd " + setcmd + " " + str.index.to_string() + " " + (str.is_muted ? "yes" : "no")
 				);
 			}
 			catch(SpawnError e) {
 				throw new Error.SET_MUTE_FAILED(e.message);
 			}
 		}
-		
-		private void parse_dump() throws Error {
+
+		private void parse() throws Error {
+			string lstcmd = "list-" + (streamType == StreamType.SINK ? "sinks" : "sources");
+			streams.clear();
 			try {
+				Regex pattern_index		= new Regex("\\s*(\\*)?\\s*index: (\\d+)");
+				Regex pattern_name		= new Regex("\\s*name: <(.*?)>");
+				Regex pattern_desc		= new Regex("\\s*device.description = \"(.*?)\"");
+				Regex pattern_vol		= new Regex("\\s*volume: 0:\\s*(\\d+)%");
+				Regex pattern_muted		= new Regex("\\s*muted: (no|yes)");
 				string dump;
-				Process.spawn_command_line_sync("pacmd dump", out dump);
-			
+				Process.spawn_command_line_sync("pacmd " + lstcmd, out dump);
+
+				Stream? str = null;
 				string[] lines = dump.split("\n");
 				foreach(string line in lines) {
-					if("device_id=" in line)
-						add_device(line);
-					else
-						set_device_attr(line);
+					MatchInfo info;
+					if("index: " in line) {
+						if(str != null)
+							streams.add(str);
+
+						pattern_index.match(line, 0, out info);
+						int index = int.parse(info.fetch(2));
+						str = new Stream();
+						str.index = index;
+						str.is_default = info.fetch(1) != "";
+					}
+					else if(str != null) {
+						if(pattern_name.match(line, 0, out info))
+							str.name = info.fetch(1);
+						else if(pattern_vol.match(line, 0, out info))
+							str.relative_volume = int.parse(info.fetch(1));
+						else if(pattern_muted.match(line, 0, out info))
+							str.is_muted = info.fetch(1) == "yes";
+						else if(pattern_desc.match(line, 0, out info))
+							str.nice_name = info.fetch(1);
+					}
 				}
-				change_names();
+
+				if(str != null)
+					streams.add(str);
 			}
 			catch(SpawnError e) {
 				throw new Error.DUMP_PARSING_FAILED(e.message);
@@ -142,65 +182,11 @@ namespace PulseAudio {
 				throw new Error.DUMP_PARSING_FAILED(e.message);
 			}
 		}
-		
-		private void add_device(string line) throws RegexError {
-			var dev = new Device();
-			Regex pattern_devid	= new Regex("device_id=\"(\\d+)\"");
-			Regex pattern_name	= new Regex("name=\"(.*?)\"");
-			string[] parts = line.split(" ");
-			foreach(string part in parts) {
-				MatchInfo info;
-				if(pattern_devid.match(part, 0, out info))
-					dev.index = int.parse(info.fetch(1));
-				else if(pattern_name.match(part, 0, out info))
-					dev.name = info.fetch(1).replace("alsa_card.", "");
-			}
-			devices.add(dev);
-		}
-		
-		private void set_device_attr(string line) {
-			foreach(Device dev in devices) {
-				if(dev.name in line) {
-					string cmd = line.split(" ")[0];
-					if(cmd == "set-default-sink")
-						dev.is_default = true;
-					else if(cmd == "set-sink-volume")
-						dev.volume = (int)line.split(" ")[2].to_long(null, 16);
-					else if(cmd == "set-sink-mute")
-						dev.is_muted = line.split(" ")[2] == "yes";
-				}
-			}
-		}
-		
-		private void change_names() throws SpawnError, RegexError {
-			string cards;
-			Process.spawn_command_line_sync("pacmd list-cards", out cards);
-		
-			Device? dev = null;
-			int index = -1;
-			Regex idxregex		= new Regex("\\s*index:\\s*(\\d+)");
-			Regex vendorregex	= new Regex("\\s*device.vendor.name = \"(.*?)\"");
-			Regex prodregex		= new Regex("\\s*device.product.name = \"(.*?)\"");
-			string[] lines = cards.split("\n");
-			foreach(string line in lines) {
-				MatchInfo info;
-				if(idxregex.match(line, 0, out info)) {
-					index = int.parse(info.fetch(1));
-					dev = get_by_index(index);
-				}
-				else if(dev != null) {
-					if(vendorregex.match(line, 0, out info))
-						dev.nice_name = info.fetch(1);
-					else if(prodregex.match(line, 0, out info))
-						dev.nice_name += " " + info.fetch(1);
-				}
-			}
-		}
-		
-		private Device? get_by_index(int index) {
-			foreach(Device dev in devices) {
-				if(dev.index == index)
-					return dev;
+
+		private Stream? get_default_stream() {
+			foreach(Stream s in streams) {
+				if(s.is_default)
+					return s;
 			}
 			return null;
 		}

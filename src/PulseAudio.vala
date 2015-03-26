@@ -141,7 +141,7 @@ namespace MyPulseAudio {
 				Regex pattern_index		= new Regex("\\s*(\\*)?\\s*index: (\\d+)");
 				Regex pattern_name		= new Regex("\\s*name: <(.*?)>");
 				Regex pattern_desc		= new Regex("\\s*device.description = \"(.*?)\"");
-				Regex pattern_vol		= new Regex("\\s*volume: 0:\\s*(\\d+)%");
+				Regex pattern_vol		= new Regex("\\s*volume: front-left:\\s*\\d+\\s*/\\s*(\\d+)%");
 				Regex pattern_muted		= new Regex("\\s*muted: (no|yes)");
 				string dump;
 				Process.spawn_command_line_sync("pacmd " + lstcmd, out dump);
